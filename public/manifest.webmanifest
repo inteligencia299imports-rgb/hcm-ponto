@@ -1,7 +1,7 @@
 {
-  "name": "CMW 299",
-  "short_name": "CMW 299",
-  "description": "Cadastro de vendas e relatórios de vendas.",
+  "name": "HCM Ponto",
+  "short_name": "HCM Ponto",
+  "description": "Registro de ponto e acompanhamento de ponto.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

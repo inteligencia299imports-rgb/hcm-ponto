@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 import { useMeuPerfil } from "@/hooks/use-meu-perfil";
 import { Users, Clock } from "lucide-react";
-import logo from "@/assets/CMW_BLACK.png";
+import logo from "@/assets/HCM-PONTO.png";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -24,11 +24,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to={homeLink} className="flex items-center gap-3">
             <img
               src={logo}
-              alt="Capital Moto Week"
-              className="h-10 w-10 rounded-full object-cover animate-logo-glow-sm transition-transform hover:scale-105"
+              alt="HCM Ponto"
+              className="h-10 w-10 rounded-md object-cover object-center animate-logo-glow-sm transition-transform hover:scale-105"
             />
             <span className="font-bold tracking-tight text-xs sm:text-sm text-muted-foreground">
-              CMW 299
+              HCM Ponto
             </span>
           </Link>
           <nav className="flex items-center gap-1">

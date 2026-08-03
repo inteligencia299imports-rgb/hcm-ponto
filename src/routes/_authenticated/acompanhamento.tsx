@@ -117,7 +117,7 @@ function FolhaPontoImpressao({
 
   return (
     <div id="folha-ponto-impressao" className="hidden print:block bg-white p-10 text-black">
-      <h1 className="text-center text-xl font-bold tracking-wide">REGISTRO DE PONTO - CMW 299</h1>
+      <h1 className="text-center text-xl font-bold tracking-wide">REGISTRO DE PONTO - HCM PONTO</h1>
 
       <div className="mt-8 mb-6 flex items-start justify-between text-sm">
         <div className="space-y-1">

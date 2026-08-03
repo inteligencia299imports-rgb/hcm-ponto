@@ -69,9 +69,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CMW 299" },
+      { title: "HCM Ponto" },
       { name: "description", content: "Registro de ponto e acompanhamento de ponto." },
-      { property: "og:title", content: "CMW 299" },
+      { property: "og:title", content: "HCM Ponto" },
       { property: "og:description", content: "Registro de ponto e acompanhamento de ponto." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

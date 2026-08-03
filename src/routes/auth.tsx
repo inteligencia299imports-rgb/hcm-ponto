@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, LogIn } from "lucide-react";
-import logo from "@/assets/CMW_BLACK.png";
+import logo from "@/assets/HCM-PONTO.png";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -51,11 +51,11 @@ function AuthPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <img
             src={logo}
-            alt="Capital Moto Week"
-            className="h-28 w-28 rounded-full object-cover animate-logo-glow"
+            alt="HCM Ponto"
+            className="h-28 w-28 rounded-md object-cover object-center animate-logo-glow"
           />
           <h1 className="mt-4 text-2xl font-extrabold uppercase tracking-wide text-foreground">
-            CMW 299
+            HCM Ponto
           </h1>
         </div>
 
