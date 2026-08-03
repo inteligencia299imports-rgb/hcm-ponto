@@ -1,0 +1,17 @@
+{
+  "name": "CMW 299",
+  "short_name": "CMW 299",
+  "description": "Cadastro de vendas e relatórios de vendas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
