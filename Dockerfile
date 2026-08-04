@@ -4,22 +4,27 @@ WORKDIR /app
 COPY package.json package-lock.json* bun.lockb* ./
 RUN npm install
 COPY . .
-
-# VITE_* vars are inlined into the client bundle at build time. They're read
-# straight from the committed .env file (no .dockerignore excludes it), so
-# no --build-arg plumbing is needed here.
-
-# This app is TanStack Start (SSR via Nitro), whose default preset targets
-# Cloudflare Workers for Lovable's own deploys. For a plain Docker container
-# we need Nitro's standalone Node server preset instead.
-ENV NITRO_PRESET=node-server
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
-WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3000
-COPY --from=build /app/.output ./.output
-EXPOSE 3000
-CMD ["node", ".output/server/index.mjs"]
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY <<'EOF' /etc/nginx/conf.d/default.conf
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
