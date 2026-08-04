@@ -24,4 +24,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: tec299/cmw:latest
+          tags: tec299/hcmp:latest
+          build-args: |
+            VITE_SUPABASE_PROJECT_ID=${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+            VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
