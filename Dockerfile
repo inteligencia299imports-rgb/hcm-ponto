@@ -1,30 +1,42 @@
 # Build stage
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json* bun.lockb* ./
-RUN npm install
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
-RUN npm run build
 
-# Production stage
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY <<'EOF' /etc/nginx/conf.d/default.conf
-server {
-    listen 80;
-    server_name localhost;
-    root /usr/share/nginx/html;
-    index index.html;
+# Vite inlines these into the client AND server bundles at build time
+# (import.meta.env.VITE_*), so they must be present as build args, not
+# runtime env vars.
+ARG VITE_SUPABASE_PROJECT_ID
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ARG VITE_SUPABASE_URL
+ARG VITE_EXTERNAL_SUPABASE_URL
+ARG VITE_EXTERNAL_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID \
+    VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY \
+    VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_EXTERNAL_SUPABASE_URL=$VITE_EXTERNAL_SUPABASE_URL \
+    VITE_EXTERNAL_SUPABASE_ANON_KEY=$VITE_EXTERNAL_SUPABASE_ANON_KEY
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+# The Lovable TanStack Start config defaults Nitro's build target to
+# Cloudflare; override it so `npm run build` emits a self-hostable Node
+# server under .output/ instead.
+RUN NITRO_PRESET=node-server npm run build
 
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Production stage — TanStack Start ships an SSR server (auth middleware,
+# server functions, error handling), not a static SPA, so it needs a Node
+# runtime rather than nginx serving files.
+FROM node:20-alpine AS production
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOST=0.0.0.0
+
+COPY --from=build /app/.output ./.output
+
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]
