@@ -1,5 +1,7 @@
 # Build stage
-FROM node:20-alpine AS build
+# @tanstack/react-start requires Node >=22.12.0 and @supabase/auth-js requires
+# >=22.0.0 (see package-lock.json engines) — Node 20 fails the install/build.
+FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -29,7 +31,7 @@ RUN NITRO_PRESET=node-server npm run build
 # Production stage — TanStack Start ships an SSR server (auth middleware,
 # server functions, error handling), not a static SPA, so it needs a Node
 # runtime rather than nginx serving files.
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 WORKDIR /app
 
 ENV NODE_ENV=production \
