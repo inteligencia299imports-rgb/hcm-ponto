@@ -5,7 +5,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# `npm ci` fails here: its strict lockfile-sync check chokes on an unresolved
+# *optional* peer dependency (lru-cache, pulled in transitively by Nitro's
+# unstorage) that isn't recorded as its own entry in package-lock.json.
+# `npm install` performs the same resolution without that rigid check.
+RUN npm install
 
 COPY . .
 
