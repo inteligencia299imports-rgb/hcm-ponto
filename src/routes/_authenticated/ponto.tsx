@@ -172,6 +172,31 @@ function PontoPage() {
     },
   });
 
+  // Tipos já batidos no dia operacional atual (usado pra travar o ciclo
+  // quando entrada/intervalo/retorno/saída já foram todos registrados hoje
+  // — sem isso, o ciclo voltaria pra "entrada" e duplicaria a batida).
+  const { data: tiposHoje = [] } = useQuery({
+    enabled: configOk,
+    queryKey: ["pontos-hoje"],
+    queryFn: async () => {
+      const client = getExternalSupabase();
+      const { data: userRes } = await client.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) return [];
+      const hoje = chaveDiaOperacional(new Date().toISOString());
+      const { data, error } = await client
+        .from("pontos")
+        .select("tipo")
+        .eq("user_id", uid)
+        .gte("registrado_em", limiteDiaOperacional(hoje))
+        .lt("registrado_em", limiteDiaOperacional(hoje, 1));
+      if (error) throw error;
+      return (data ?? []).map((p) => p.tipo as TipoPonto);
+    },
+  });
+
+  const cicloDeHojeCompleto = ORDEM_TIPOS.every((t) => tiposHoje.includes(t));
+
   const {
     data: meusPontos = [],
     isLoading: carregandoPontos,
@@ -247,8 +272,17 @@ function PontoPage() {
       toast.success(TIPO_INFO[tipo].mensagem);
       queryClient.invalidateQueries({ queryKey: ["ultimo-ponto"] });
       queryClient.invalidateQueries({ queryKey: ["meus-pontos"] });
+      queryClient.invalidateQueries({ queryKey: ["pontos-hoje"] });
     },
-    onError: (err: Error) => {
+    onError: (err: Error & { code?: string }) => {
+      // 23505 = unique_violation: já existe uma batida desse tipo hoje
+      // (segunda trava, além do botão desabilitado, contra corrida/duplo clique).
+      if (err.code === "23505") {
+        toast.error("Esse ponto já foi registrado hoje.");
+        queryClient.invalidateQueries({ queryKey: ["pontos-hoje"] });
+        queryClient.invalidateQueries({ queryKey: ["ultimo-ponto"] });
+        return;
+      }
       toast.error("Não foi possível bater o ponto", { description: mensagemErroLocalizacao(err) });
     },
   });
@@ -278,11 +312,13 @@ function PontoPage() {
         <Button
           size="lg"
           className="h-16 w-full text-lg flex"
-          disabled={!configOk || carregandoUltimo || bater.isPending}
+          disabled={!configOk || carregandoUltimo || bater.isPending || cicloDeHojeCompleto}
           onClick={() => bater.mutate(proximoTipo)}
         >
           {bater.isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />
+          ) : cicloDeHojeCompleto ? (
+            "Ponto de hoje completo"
           ) : (
             <>
               <ProximoIcon className="h-5 w-5" /> {TIPO_INFO[proximoTipo].label}
