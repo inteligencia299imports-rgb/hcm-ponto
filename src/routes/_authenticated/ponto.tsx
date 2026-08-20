@@ -14,6 +14,7 @@ import {
   fmtDiaMes,
   fmtHoraSaoPaulo,
   limiteDiaOperacional,
+  mesAtualSaoPaulo,
 } from "@/lib/tempo";
 import { agruparPontosPorDia, fmtDuracaoHoras } from "@/lib/ponto";
 import { SingleDatePicker } from "@/components/single-date-picker";
@@ -57,8 +58,18 @@ const TIPO_INFO: Record<
   TipoPonto,
   { label: string; mensagem: string; icon: LucideIcon; corPrimaria: boolean }
 > = {
-  entrada: { label: "Entrada", mensagem: "Entrada registrada!", icon: ClockCheck, corPrimaria: true },
-  intervalo: { label: "Intervalo", mensagem: "Intervalo registrado!", icon: Pause, corPrimaria: false },
+  entrada: {
+    label: "Entrada",
+    mensagem: "Entrada registrada!",
+    icon: ClockCheck,
+    corPrimaria: true,
+  },
+  intervalo: {
+    label: "Intervalo",
+    mensagem: "Intervalo registrado!",
+    icon: Pause,
+    corPrimaria: false,
+  },
   retorno: { label: "Retorno", mensagem: "Retorno registrado!", icon: Play, corPrimaria: true },
   saida: { label: "Saída", mensagem: "Saída registrada!", icon: LogOut, corPrimaria: false },
 };
@@ -109,8 +120,11 @@ function PontoPage() {
   const configOk = hasExternalSupabaseConfig();
   const { data: meuPerfil } = useMeuPerfil();
 
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  // Por padrão, os registros mostram sempre o mês atual.
+  const mesAtual = mesAtualSaoPaulo();
+
+  const [dataInicio, setDataInicio] = useState(mesAtual.inicio);
+  const [dataFim, setDataFim] = useState(mesAtual.fim);
   const [filtroOpen, setFiltroOpen] = useState(false);
   const [rascunhoInicio, setRascunhoInicio] = useState("");
   const [rascunhoFim, setRascunhoFim] = useState("");
@@ -130,13 +144,13 @@ function PontoPage() {
   }
 
   function limpar() {
-    setDataInicio("");
-    setDataFim("");
-    setRascunhoInicio("");
-    setRascunhoFim("");
+    setDataInicio(mesAtual.inicio);
+    setDataFim(mesAtual.fim);
+    setRascunhoInicio(mesAtual.inicio);
+    setRascunhoFim(mesAtual.fim);
   }
 
-  const filtroAtivo = Boolean(dataInicio || dataFim);
+  const filtroAtivo = dataInicio !== mesAtual.inicio || dataFim !== mesAtual.fim;
 
   const { data: ultimoPonto, isLoading: carregandoUltimo } = useQuery({
     enabled: configOk,
@@ -208,7 +222,8 @@ function PontoPage() {
   // ciclo reinicia: a próxima batida é sempre entrada, mesmo que o dia
   // anterior tenha ficado incompleto (ex.: sem saída registrada).
   const proximoTipo: TipoPonto =
-    !ultimoPonto || chaveDiaOperacional(ultimoPonto.registrado_em) !== chaveDiaOperacional(new Date().toISOString())
+    !ultimoPonto ||
+    chaveDiaOperacional(ultimoPonto.registrado_em) !== chaveDiaOperacional(new Date().toISOString())
       ? "entrada"
       : ORDEM_TIPOS[(ORDEM_TIPOS.indexOf(ultimoPonto.tipo) + 1) % ORDEM_TIPOS.length];
 
@@ -225,7 +240,6 @@ function PontoPage() {
         tipo,
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
-        precisao_metros: pos.coords.accuracy,
       });
       if (error) throw error;
     },
@@ -243,10 +257,56 @@ function PontoPage() {
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Clock className="h-6 w-6" /> Ponto
-        </h1>
+      <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+        <Clock className="h-6 w-6" /> Ponto
+      </h1>
+
+      {!configOk && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="pt-6 flex gap-3 text-sm">
+            <AlertTriangle className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              Credenciais do banco externo não configuradas. Preencha{" "}
+              <code>VITE_EXTERNAL_SUPABASE_URL</code> e <code>VITE_EXTERNAL_SUPABASE_ANON_KEY</code>{" "}
+              no arquivo <code>.env</code>.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-2">
+        <Button
+          size="lg"
+          className="h-16 w-full text-lg flex"
+          disabled={!configOk || carregandoUltimo || bater.isPending}
+          onClick={() => bater.mutate(proximoTipo)}
+        >
+          {bater.isPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              <ProximoIcon className="h-5 w-5" /> {TIPO_INFO[proximoTipo].label}
+            </>
+          )}
+        </Button>
+
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="h-3.5 w-3.5" />
+          Sua localização será solicitada ao bater o ponto.
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <KpiCard label="Dias trabalhados" value={String(diasTrabalhados)} icon={CalendarCheck} />
+        <KpiCard
+          label="Horas (média)"
+          value={horasTrabalhadasMedia > 0 ? fmtDuracaoHoras(horasTrabalhadasMedia) : "—"}
+          icon={Hourglass}
+        />
+      </div>
+
+      <div className="mb-1 flex items-center justify-between gap-4">
+        <h2 className="text-lg font-semibold">Registros</h2>
 
         <div className="flex items-center gap-2">
           {filtroAtivo && (
@@ -296,52 +356,6 @@ function PontoPage() {
           </Popover>
         </div>
       </div>
-
-      {!configOk && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="pt-6 flex gap-3 text-sm">
-            <AlertTriangle className="h-5 w-5 text-primary shrink-0" />
-            <div>
-              Credenciais do banco externo não configuradas. Preencha{" "}
-              <code>VITE_EXTERNAL_SUPABASE_URL</code> e <code>VITE_EXTERNAL_SUPABASE_ANON_KEY</code>{" "}
-              no arquivo <code>.env</code>.
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="space-y-2">
-        <Button
-          size="lg"
-          className="h-16 w-full text-lg flex"
-          disabled={!configOk || carregandoUltimo || bater.isPending}
-          onClick={() => bater.mutate(proximoTipo)}
-        >
-          {bater.isPending ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <>
-              <ProximoIcon className="h-5 w-5" /> {TIPO_INFO[proximoTipo].label}
-            </>
-          )}
-        </Button>
-
-        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5" />
-          Sua localização será solicitada ao bater o ponto.
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <KpiCard label="Dias trabalhados" value={String(diasTrabalhados)} icon={CalendarCheck} />
-        <KpiCard
-          label="Horas (média)"
-          value={horasTrabalhadasMedia > 0 ? fmtDuracaoHoras(horasTrabalhadasMedia) : "—"}
-          icon={Hourglass}
-        />
-      </div>
-
-      <h2 className="text-lg font-semibold mb-1">Registros</h2>
       <div className="mb-4 h-px w-full bg-border/50" />
 
       <Card>
@@ -373,7 +387,9 @@ function PontoPage() {
                   <TableRow key={linha.dia}>
                     <TableCell className="whitespace-nowrap">{fmtDiaMes(linha.dia)}</TableCell>
                     <TableCell>{linha.entrada ? fmtHoraSaoPaulo(linha.entrada) : "—"}</TableCell>
-                    <TableCell>{linha.intervalo ? fmtHoraSaoPaulo(linha.intervalo) : "—"}</TableCell>
+                    <TableCell>
+                      {linha.intervalo ? fmtHoraSaoPaulo(linha.intervalo) : "—"}
+                    </TableCell>
                     <TableCell>{linha.retorno ? fmtHoraSaoPaulo(linha.retorno) : "—"}</TableCell>
                     <TableCell>{linha.saida ? fmtHoraSaoPaulo(linha.saida) : "—"}</TableCell>
                     <TableCell className="font-medium whitespace-nowrap">

@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import {
   getExternalSupabase,
   hasExternalSupabaseConfig,
+  PROJETO_ID_HCM_PONTO,
 } from "@/integrations/external-supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { toast } from "sonner";
@@ -23,11 +24,11 @@ export const Route = createFileRoute("/_authenticated")({
 
     const { data: registro, error: roleError } = await client
       .from("user_roles")
-      .select("id")
+      .select("id, ativo, projeto_id")
       .eq("user_id", data.user.id)
       .maybeSingle();
     if (roleError) throw roleError;
-    if (!registro) {
+    if (!registro || !registro.ativo || registro.projeto_id !== PROJETO_ID_HCM_PONTO) {
       await client.auth.signOut();
       toast.error("Sua conta não tem acesso a este sistema.");
       throw redirect({ to: "/auth" });

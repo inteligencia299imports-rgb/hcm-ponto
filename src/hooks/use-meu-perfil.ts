@@ -10,8 +10,8 @@ export type MeuPerfil = {
   nome: string;
   role: AppRole;
   departamento: string | null;
+  cargaHoraria: number | null;
   isMaster: boolean;
-  isGestor: boolean;
 };
 
 export function useMeuPerfil() {
@@ -27,21 +27,26 @@ export function useMeuPerfil() {
 
       const { data: registro, error } = await client
         .from("user_roles")
-        .select("nome, role, departamento")
+        .select("nome, app_role")
         .eq("user_id", uid)
         .maybeSingle();
       if (error) throw error;
       if (!registro) return null;
 
-      const departamento = registro.departamento?.trim().toLowerCase();
+      const { data: funcionario, error: funcionarioError } = await client
+        .from("funcionarios_hcm")
+        .select("departamento, carga_horaria")
+        .eq("usuario_id", uid)
+        .maybeSingle();
+      if (funcionarioError) throw funcionarioError;
 
       return {
         userId: uid,
         nome: registro.nome,
-        role: registro.role as AppRole,
-        departamento: registro.departamento,
-        isMaster: registro.role === "master",
-        isGestor: departamento === "gestor",
+        role: registro.app_role as AppRole,
+        departamento: funcionario?.departamento ?? null,
+        cargaHoraria: funcionario?.carga_horaria ?? null,
+        isMaster: registro.app_role === "master",
       };
     },
   });

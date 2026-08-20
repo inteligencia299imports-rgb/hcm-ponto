@@ -20,6 +20,9 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Supabase CLI local metadata
+supabase/.temp/
+
 # Env files with credentials
 .env.*
 !.env.example

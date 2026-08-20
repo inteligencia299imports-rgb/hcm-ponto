@@ -25,13 +25,30 @@ function createSupabaseFetch(key: string): typeof fetch {
 
 export type AppRole = "vendedor" | "master";
 
+// Id do projeto "HCM Ponto" em public.projetos — gate de acesso ao sistema
+// (só entra quem tem user_roles.ativo = true e projeto_id igual a este).
+export const PROJETO_ID_HCM_PONTO = "db9033c7-eea3-45e0-abcb-950b664aebe9";
+
 export type UserRole = {
   id: string;
   user_id: string;
   nome: string;
-  role: AppRole;
+  app_role: AppRole;
   departamento: string | null;
+  ativo: boolean;
+  projeto_id: string | null;
   created_at: string;
+};
+
+// Departamento e carga horária hoje vêm de public.funcionarios_hcm (não
+// mais de user_roles.departamento), preparando pra futura unificação com o
+// banco de HCM.
+export type FuncionarioHcm = {
+  id: string;
+  usuario_id: string | null;
+  nome: string;
+  departamento: string | null;
+  carga_horaria: number | null;
 };
 
 export type TipoPonto = "entrada" | "intervalo" | "retorno" | "saida";
@@ -44,7 +61,8 @@ export type PontoRegistro = {
   registrado_em: string;
   latitude: number | null;
   longitude: number | null;
-  precisao_metros: number | null;
+  justificativa: string | null;
+  user_id_ajuste: string | null;
 };
 
 let _client: SupabaseClient | undefined;

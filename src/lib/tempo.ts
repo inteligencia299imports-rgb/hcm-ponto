@@ -102,3 +102,16 @@ export function dataHoraAtualSaoPaulo(): { data: string; hora: string } {
   const m = String(sp.getUTCMinutes()).padStart(2, "0");
   return { data: `${ano}-${mes}-${dia}`, hora: `${h}:${m}` };
 }
+
+// Primeiro e último dia (YYYY-MM-DD) do mês atual no calendário de SP —
+// usado como período padrão dos filtros de registros.
+export function mesAtualSaoPaulo(): { inicio: string; fim: string } {
+  const { data } = dataHoraAtualSaoPaulo();
+  const [ano, mes] = data.split("-").map(Number);
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  const mesStr = String(mes).padStart(2, "0");
+  return {
+    inicio: `${ano}-${mesStr}-01`,
+    fim: `${ano}-${mesStr}-${String(ultimoDia).padStart(2, "0")}`,
+  };
+}

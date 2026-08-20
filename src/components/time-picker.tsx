@@ -19,10 +19,21 @@ function ColunaTempo({
   onStep: (v: string) => void;
 }) {
   const selecionadoRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     selecionadoRef.current?.scrollIntoView({ block: "center" });
   }, [selecionado]);
+
+  // O seletor abre num Popover dentro de um Dialog; o bloqueio de scroll do
+  // Radix Dialog intercepta o evento de wheel antes dele chegar aqui (o
+  // popover é renderizado num portal fora da árvore DOM do Dialog, então o
+  // remove-scroll do Dialog não reconhece esta div como rolável). Em vez de
+  // depender do scroll nativo do navegador, ajusta o scrollTop manualmente.
+  function rolar(e: React.WheelEvent<HTMLDivElement>) {
+    e.preventDefault();
+    if (containerRef.current) containerRef.current.scrollTop += e.deltaY;
+  }
 
   // O seletor abre num Popover dentro de um Dialog; nesse aninhamento, o
   // bloqueio de scroll do Dialog costuma impedir o gesto de arrastar pra
@@ -45,7 +56,11 @@ function ColunaTempo({
       >
         <ChevronUp className="h-4 w-4" />
       </button>
-      <div className="h-56 w-14 touch-pan-y overflow-y-auto overscroll-contain">
+      <div
+        ref={containerRef}
+        onWheel={rolar}
+        className="h-56 w-14 touch-pan-y overflow-y-auto overscroll-contain"
+      >
         <div className="flex flex-col gap-0.5 p-1">
           {valores.map((v) => {
             const ativo = v === selecionado;

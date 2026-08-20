@@ -13,7 +13,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPontoRouteImport } from './routes/_authenticated/ponto'
-import { Route as AuthenticatedAcompanhamentoRouteImport } from './routes/_authenticated/acompanhamento'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -34,23 +33,15 @@ const AuthenticatedPontoRoute = AuthenticatedPontoRouteImport.update({
   path: '/ponto',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAcompanhamentoRoute =
-  AuthenticatedAcompanhamentoRouteImport.update({
-    id: '/acompanhamento',
-    path: '/acompanhamento',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/acompanhamento': typeof AuthenticatedAcompanhamentoRoute
   '/ponto': typeof AuthenticatedPontoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/acompanhamento': typeof AuthenticatedAcompanhamentoRoute
   '/ponto': typeof AuthenticatedPontoRoute
 }
 export interface FileRoutesById {
@@ -58,21 +49,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/acompanhamento': typeof AuthenticatedAcompanhamentoRoute
   '/_authenticated/ponto': typeof AuthenticatedPontoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/acompanhamento' | '/ponto'
+  fullPaths: '/' | '/auth' | '/ponto'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/acompanhamento' | '/ponto'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/auth'
-    | '/_authenticated/acompanhamento'
-    | '/_authenticated/ponto'
+  to: '/' | '/auth' | '/ponto'
+  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/ponto'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -111,23 +95,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPontoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/acompanhamento': {
-      id: '/_authenticated/acompanhamento'
-      path: '/acompanhamento'
-      fullPath: '/acompanhamento'
-      preLoaderRoute: typeof AuthenticatedAcompanhamentoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAcompanhamentoRoute: typeof AuthenticatedAcompanhamentoRoute
   AuthenticatedPontoRoute: typeof AuthenticatedPontoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAcompanhamentoRoute: AuthenticatedAcompanhamentoRoute,
   AuthenticatedPontoRoute: AuthenticatedPontoRoute,
 }
 
