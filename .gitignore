@@ -24,6 +24,7 @@ dist-ssr
 supabase/.temp/
 
 # Env files with credentials
+.env
 .env.*
 !.env.example
 
