@@ -318,7 +318,9 @@ function PontoPage() {
           {bater.isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : cicloDeHojeCompleto ? (
-            "Ponto de hoje completo"
+            <>
+              <Check className="h-5 w-5" /> Ponto Completo
+            </>
           ) : (
             <>
               <ProximoIcon className="h-5 w-5" /> {TIPO_INFO[proximoTipo].label}
