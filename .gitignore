@@ -23,10 +23,6 @@ dist-ssr
 # Supabase CLI local metadata
 supabase/.temp/
 
-# Env files with credentials
-.env
-.env.*
-
 # Local Claude Code settings
 .claude/
 
