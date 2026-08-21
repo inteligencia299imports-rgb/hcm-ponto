@@ -26,7 +26,6 @@ supabase/.temp/
 # Env files with credentials
 .env
 .env.*
-!.env.example
 
 # Local Claude Code settings
 .claude/
