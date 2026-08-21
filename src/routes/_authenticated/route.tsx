@@ -30,7 +30,9 @@ export const Route = createFileRoute("/_authenticated")({
     if (roleError) throw roleError;
     if (!registro || !registro.ativo || registro.projeto_id !== PROJETO_ID_HCM_PONTO) {
       await client.auth.signOut();
-      toast.error("Sua conta não tem acesso a este sistema.");
+      toast.error(
+        "Você não tem acesso a este sistema. Procure o departamento de inteligência da 299.",
+      );
       throw redirect({ to: "/auth" });
     }
 

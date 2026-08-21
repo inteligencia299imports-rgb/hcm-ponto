@@ -3,7 +3,11 @@ import { useState } from "react";
 import {
   getExternalSupabase,
   hasExternalSupabaseConfig,
+  PROJETO_ID_HCM_PONTO,
 } from "@/integrations/external-supabase/client";
+
+const MENSAGEM_SEM_ACESSO =
+  "Você não tem acesso a este sistema. Procure o departamento de inteligência da 299.";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,11 +37,28 @@ function AuthPage() {
     setLoading(true);
     try {
       const client = getExternalSupabase();
-      const { error } = await client.auth.signInWithPassword({ email, password });
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) {
         toast.error("Falha no login", { description: error.message });
         return;
       }
+
+      const { data: registro, error: roleError } = await client
+        .from("user_roles")
+        .select("ativo, projeto_id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (roleError) {
+        await client.auth.signOut();
+        toast.error("Falha no login", { description: roleError.message });
+        return;
+      }
+      if (!registro || !registro.ativo || registro.projeto_id !== PROJETO_ID_HCM_PONTO) {
+        await client.auth.signOut();
+        toast.error(MENSAGEM_SEM_ACESSO);
+        return;
+      }
+
       toast.success("Bem-vindo!");
       navigate({ to: "/" });
     } finally {
